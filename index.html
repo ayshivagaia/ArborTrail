@@ -10,12 +10,12 @@
     <!-- Babel standalone for on-the-fly transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Polyfill for process.env which is missing in browsers -->
+    <!-- Polyfill for process.env -->
     <script>
         window.process = {
             env: {
-                // The API_KEY is expected to be injected by the environment or Netlify
-                API_KEY: "" 
+                // This placeholder will be replaced by Netlify during deployment
+                API_KEY: "API_KEY_PLACEHOLDER" 
             }
         };
     </script>
@@ -26,12 +26,8 @@
         :root {
             --forest-black: #0a0f05; 
             --forest-deep: #1a220c; 
-            --olive-glow: #a3b18a; 
             --pollen: #ea580c; 
-            --autumn-red: #991b1b;
-            --autumn-red-glow: #ef4444;
             --ochre: #ca8a04; 
-            --ochre-glow: #eab308;
             --orange-red: #ff4500; 
         }
 
@@ -53,36 +49,6 @@
             background: radial-gradient(circle at 50% 40%, #1a220c 0%, #0a0f05 70%);
         }
 
-        .mist {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 40vh;
-            background: linear-gradient(to top, rgba(26, 34, 12, 0.4), transparent);
-            z-index: -4;
-            pointer-events: none;
-            filter: blur(60px);
-        }
-
-        @keyframes ray-shimmer {
-            0%, 100% { opacity: 0.1; transform: scaleX(1); }
-            50% { opacity: 0.25; transform: scaleX(1.1); }
-        }
-
-        .sun-ray {
-            position: fixed;
-            top: -100%;
-            left: 10%;
-            width: 40%;
-            height: 300%;
-            background: linear-gradient(to right, transparent, rgba(255, 69, 0, 0.05), transparent);
-            transform: rotate(-25deg);
-            filter: blur(100px);
-            animation: ray-shimmer 8s ease-in-out infinite;
-            z-index: -3;
-        }
-
         @keyframes pollen-float {
             0% { transform: translateY(0) rotate(0); opacity: 0; }
             20% { opacity: 0.6; }
@@ -102,32 +68,12 @@
             z-index: -2;
         }
 
-        .bokeh-leaf {
-            position: fixed;
-            z-index: 100;
-            pointer-events: none;
-            filter: blur(12px);
-            opacity: 0.3;
-            color: var(--orange-red);
-            transition: transform 0.2s ease-out;
-        }
-
         .organic-glass {
             background: rgba(10, 15, 5, 0.7);
             backdrop-filter: blur(30px);
             border: 1px solid rgba(255, 69, 0, 0.2); 
             box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9);
-            border-radius: 60% 40% 70% 30% / 40% 50% 60% 50%;
-        }
-
-        .btn-organic {
-            border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%;
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .btn-organic:hover {
-            border-radius: 50%;
-            transform: scale(1.05) rotate(2deg);
+            border-radius: 2rem;
         }
 
         .correct-glow {
@@ -141,19 +87,18 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.36.0",
-    "d3": "https://esm.sh/d3@7.9.0",
-    "topojson-client": "https://esm.sh/topojson-client@3.1.0",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "react": "https://esm.sh/react@^19.2.3",
+    "d3": "https://esm.sh/d3@^7.9.0",
+    "topojson-client": "https://esm.sh/topojson-client@^3.1.0"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
-    <!-- Script must be type="text/babel" to be picked up by the Babel standalone transpiler -->
+    <!-- Load consolidated index.tsx directly with Babel -->
     <script type="text/babel" src="index.tsx" data-type="module" data-presets="typescript,react"></script>
 </body>
 </html>
