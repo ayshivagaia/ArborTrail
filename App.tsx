@@ -152,7 +152,7 @@ const App: React.FC = () => {
         <div className="z-10 text-center max-w-5xl w-full">
           <header className="mb-12 md:mb-20 animate-in fade-in slide-in-from-top-12 duration-1000">
             <h1 className="text-5xl xs:text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter text-[#ff4500] accent-red-glow mb-4 uppercase leading-none break-words">
-              ARBOR<span className="text-[#ca8a04] font-serif italic normal-case inline-block">Trail</span>
+              ARBOR<span className="text-[#ca8a04] font-serif italic normal-case inline-block">Gaia</span>
             </h1>
             <div className="h-1 w-16 md:w-24 bg-[#ff4500] mx-auto rounded-full mb-6"></div>
             <p className="text-red-100/50 text-base md:text-xl font-light tracking-wide max-w-2xl mx-auto italic px-4">
@@ -251,7 +251,7 @@ const App: React.FC = () => {
               <i className="fas fa-tree text-[#ca8a04] text-base md:text-xl"></i>
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl md:text-3xl font-black tracking-tighter leading-none uppercase text-[#ff4500] truncate">ARBOR<span className="text-[#ca8a04]">Trail</span></h1>
+              <h1 className="text-xl md:text-3xl font-black tracking-tighter leading-none uppercase text-[#ff4500] truncate">ARBOR<span className="text-[#ca8a04]">Gaia</span></h1>
               <p className="text-[8px] md:text-[10px] text-[#ff4500]/60 uppercase tracking-[0.3em] md:tracking-[0.5em] font-black mt-1 md:mt-2 truncate">{difficulty} MODE</p>
             </div>
           </div>
@@ -388,7 +388,7 @@ const App: React.FC = () => {
 
       <footer className="mt-40 md:mt-60 text-center pb-20 md:pb-32 px-6">
         <div className="w-24 md:w-32 h-px bg-gradient-to-r from-transparent via-[#ff4500]/20 to-transparent mx-auto mb-12 md:mb-16"></div>
-        <p className="text-[9px] md:text-[11px] uppercase tracking-[0.6em] md:tracking-[0.8em] text-[#ff4500]/60 font-black mb-8 md:mb-10">ArborTrail Synthesis Engine</p>
+        <p className="text-[9px] md:text-[11px] uppercase tracking-[0.6em] md:tracking-[0.8em] text-[#ff4500]/60 font-black mb-8 md:mb-10">ArborGaia Synthesis Engine</p>
         <button 
           onClick={() => setStatus(GameStatus.DIFFICULTY_SELECTION)}
           className="px-8 md:px-14 py-4 md:py-5 text-[9px] md:text-[11px] text-[#ca8a04] hover:text-[#eab308] font-black uppercase tracking-[0.3em] md:tracking-[0.4em] transition-all flex items-center gap-3 md:gap-4 mx-auto bg-[#ff4500] rounded-full border border-[#ff4500]/20 hover:border-[#ff4500]/40 backdrop-blur-xl"
