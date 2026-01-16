@@ -6,19 +6,21 @@
     <title>ArborGaia | A Botanical Journey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Babel standalone for on-the-fly transpilation of TSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
 
         :root {
-            --forest-black: #0a0f05; /* Deeper darker olive-green */
+            --forest-black: #0a0f05; 
             --forest-deep: #1a220c; 
             --olive-glow: #a3b18a; 
             --pollen: #ea580c; 
             --autumn-red: #991b1b;
             --autumn-red-glow: #ef4444;
-            --ochre: #ca8a04; /* Earthy Ochre */
+            --ochre: #ca8a04; 
             --ochre-glow: #eab308;
-            --orange-red: #ff4500; /* Orange-Red */
+            --orange-red: #ff4500; 
         }
 
         body {
@@ -124,11 +126,6 @@
             text-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
         }
 
-        /* Custom UI classes for the new theme */
-        .btn-orange-red {
-            background-color: var(--orange-red);
-            color: var(--ochre);
-        }
         .text-ochre {
             color: var(--ochre);
         }
@@ -148,5 +145,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- Main entry point, handled by Babel standalone -->
+    <script type="text/babel" src="index.tsx" data-type="module" data-presets="react,typescript"></script>
 </body>
 </html>
