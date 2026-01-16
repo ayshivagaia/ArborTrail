@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "sed -i \"s/API_KEY_PLACEHOLDER/${API_KEY}/g\" index.html"
+    "build": "if [ -z \"$API_KEY\" ]; then echo \"Warning: API_KEY is empty during build.\"; else sed -i \"s/API_KEY_PLACEHOLDER/$API_KEY/g\" index.html; fi"
   }
 }

@@ -42,9 +42,15 @@ export enum GameStatus {
 }
 
 // --- SERVICES ---
-// Accessing the shimmed API_KEY directly from process.env
-const API_KEY = (window as any).process?.env?.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const getAI = () => {
+  const key = (window as any).process?.env?.API_KEY;
+  if (!key || key === 'API_KEY_PLACEHOLDER') {
+    console.error("ArborGaia: API Key is still the placeholder. Check Netlify Environment Variables.");
+    return null;
+  }
+  console.log("ArborGaia: API Key detected. Initializing engine...");
+  return new GoogleGenAI({ apiKey: key });
+};
 
 const getTreeListPrompt = (difficulty: Difficulty) => {
   let criteria = "";
@@ -56,6 +62,9 @@ const getTreeListPrompt = (difficulty: Difficulty) => {
 };
 
 async function fetchNewTrees(difficulty: Difficulty): Promise<TreeData[]> {
+  const ai = getAI();
+  if (!ai) throw new Error("API Key Missing");
+  
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: getTreeListPrompt(difficulty),
@@ -90,6 +99,9 @@ async function fetchNewTrees(difficulty: Difficulty): Promise<TreeData[]> {
 }
 
 async function generateTreeImage(description: string, season: 'autumn' | 'spring'): Promise<string> {
+  const ai = getAI();
+  if (!ai) throw new Error("API Key Missing");
+
   const prompt = `Hyper-realistic wide-angle nature photo of a single ${description}. Cinematic lighting, ${season} morning atmosphere. 8k, National Geographic style. No text.`;
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -126,18 +138,15 @@ const Globe: React.FC<{ locations: GeoLocation[] }> = ({ locations }) => {
 
     const render = () => {
       context.clearRect(0, 0, width, height);
-      rotation += 0.35; // Slightly faster rotation
+      rotation += 0.35;
       projection.rotate([rotation, -10]);
       
-      // Ocean
       context.fillStyle = '#050802';
       context.beginPath(); context.arc(width/2, height/2, width/2.2, 0, 2 * Math.PI); context.fill();
       
-      // Land
       context.fillStyle = '#1e290e'; context.strokeStyle = '#3a4a24'; context.lineWidth = 0.5;
       context.beginPath(); path(landData); context.fill(); context.stroke();
       
-      // Markers
       locations.forEach(loc => {
         const coords = projection([loc.lng, loc.lat]);
         if (coords) {
@@ -188,8 +197,8 @@ const App: React.FC = () => {
   })), []);
 
   useEffect(() => {
-    // Vercel credentials check
-    if (!API_KEY || API_KEY === 'API_KEY_PLACEHOLDER') setStatus(GameStatus.ERROR);
+    const ai = getAI();
+    if (!ai) setStatus(GameStatus.ERROR);
   }, []);
 
   const initGame = async (selectedDifficulty: Difficulty) => {
@@ -200,7 +209,10 @@ const App: React.FC = () => {
       const trees = await fetchNewTrees(selectedDifficulty);
       setPool(trees);
       await startRound(trees[0], trees);
-    } catch (e) { setStatus(GameStatus.ERROR); }
+    } catch (e) { 
+      console.error("ArborGaia: Error initializing game", e);
+      setStatus(GameStatus.ERROR); 
+    }
   };
 
   const startRound = async (target: TreeData, currentPool: TreeData[]) => {
@@ -212,7 +224,10 @@ const App: React.FC = () => {
       const options = [target.commonName, ...distractors].sort(() => 0.5 - Math.random());
       setCurrentRound({ targetTree: target, options, autumnImageUrl: autumnImg, springImageUrl: null });
       setSelectedOption(null); setIsCorrect(null); setStatus(GameStatus.GUESSING);
-    } catch (e) { setStatus(GameStatus.ERROR); }
+    } catch (e) { 
+      console.error("ArborGaia: Error starting round", e);
+      setStatus(GameStatus.ERROR); 
+    }
   };
 
   const handleGuess = async (choice: string) => {
@@ -228,7 +243,10 @@ const App: React.FC = () => {
         const springImg = await generateTreeImage(currentRound.targetTree.springDescription, 'spring');
         setCurrentRound(prev => prev ? { ...prev, springImageUrl: springImg } : null);
         setStatus(GameStatus.RESULT);
-      } catch (e) { setStatus(GameStatus.RESULT); }
+      } catch (e) { 
+        console.warn("ArborGaia: Spring image failed to generate", e);
+        setStatus(GameStatus.RESULT); 
+      }
     } else { setStatus(GameStatus.RESULT); }
   };
 
@@ -241,11 +259,23 @@ const App: React.FC = () => {
   if (status === GameStatus.ERROR) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#080c04] text-white p-12 text-center">
+        <div className="forest-core"></div>
         <div className="w-20 h-20 bg-red-900/20 rounded-full flex items-center justify-center mb-8 border border-red-500/30">
           <i className="fas fa-plug text-3xl text-red-500"></i>
         </div>
         <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter">Connection Failed</h2>
-        <p className="text-slate-400 max-w-sm text-sm leading-relaxed">The ArborGaia engine could not verify your API credentials. Ensure the <strong>API_KEY</strong> environment variable is correctly set in your Vercel Dashboard.</p>
+        <div className="text-slate-400 max-w-sm text-sm leading-relaxed space-y-4">
+          <p>The botanical engine could not start. This usually means the API key is missing or invalid.</p>
+          <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-left">
+            <p className="font-bold text-[#ca8a04] mb-2 uppercase text-[10px] tracking-widest">Troubleshooting Steps:</p>
+            <ol className="list-decimal ml-4 space-y-1 opacity-70">
+              <li>Open <strong>Site Configuration</strong> in Netlify.</li>
+              <li>Go to <strong>Environment variables</strong>.</li>
+              <li>Add <code className="text-[#ff4500]">API_KEY</code> with your key.</li>
+              <li>Go to <strong>Deploys</strong> and click <strong>Trigger deploy > Clear cache and deploy site</strong>.</li>
+            </ol>
+          </div>
+        </div>
       </div>
     );
   }
@@ -268,7 +298,7 @@ const App: React.FC = () => {
             <button key={d} onClick={() => initGame(d)} className="organic-glass p-8 text-left hover:scale-105 transition-all hover:bg-[#ff4500]/10 border-[#ff4500]/20 group">
               <div className="flex justify-between items-center">
                 <h3 className="text-2xl font-bold font-serif text-[#ca8a04]">{d} Trail</h3>
-                <i className="fas fa-arrow-right-long text-[#ff4500] opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all"></i>
+                <i className="fas fa-leaf opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all"></i>
               </div>
               <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-2 font-black">Level Identification Protocol</p>
             </button>
