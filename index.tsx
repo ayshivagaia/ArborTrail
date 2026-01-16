@@ -42,16 +42,17 @@ export enum GameStatus {
 }
 
 // --- SERVICES ---
+// Accessing the shimmed API_KEY directly from process.env
 const API_KEY = (window as any).process?.env?.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey: API_KEY });
 
 const getTreeListPrompt = (difficulty: Difficulty) => {
   let criteria = "";
-  if (difficulty === Difficulty.EASY) criteria = "very common, iconic trees with distinct shapes and classic autumn colors (e.g., Sugar Maple).";
-  else if (difficulty === Difficulty.MEDIUM) criteria = "a mix of regional trees and unique species (e.g., Ginkgo Biloba).";
-  else criteria = "rare or harder-to-identify species (e.g., Wollemi Pine).";
+  if (difficulty === Difficulty.EASY) criteria = "very common, iconic trees with distinct shapes and vibrant autumn colors (e.g., Sugar Maple, Weeping Willow).";
+  else if (difficulty === Difficulty.MEDIUM) criteria = "a mix of regional trees and unique species with specific growth patterns (e.g., Ginkgo Biloba, Scarlet Oak).";
+  else criteria = "rare, ancient, or cryptic species from specific global habitats (e.g., Wollemi Pine, Baobab).";
 
-  return `Generate 3 distinct tree species matching: ${criteria}. Provide commonName, scientificName, autumnDescription, springDescription, funFact, and habitats (5-8 lat/lng coords). Return JSON array.`;
+  return `Generate 3 distinct tree species matching: ${criteria}. Provide commonName, scientificName, autumnDescription, springDescription, funFact, and habitats (5-8 major lat/lng coords). Return JSON array.`;
 };
 
 async function fetchNewTrees(difficulty: Difficulty): Promise<TreeData[]> {
@@ -89,7 +90,7 @@ async function fetchNewTrees(difficulty: Difficulty): Promise<TreeData[]> {
 }
 
 async function generateTreeImage(description: string, season: 'autumn' | 'spring'): Promise<string> {
-  const prompt = `A professional photograph of a single ${description}. Lighting showcasing ${season} foliage. 8k.`;
+  const prompt = `Hyper-realistic wide-angle nature photo of a single ${description}. Cinematic lighting, ${season} morning atmosphere. 8k, National Geographic style. No text.`;
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
     contents: { parts: [{ text: prompt }] },
@@ -97,7 +98,7 @@ async function generateTreeImage(description: string, season: 'autumn' | 'spring
   });
   const part = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
   if (part?.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  throw new Error("No image data");
+  throw new Error("Botanical imaging failed.");
 }
 
 // --- COMPONENTS ---
@@ -125,18 +126,29 @@ const Globe: React.FC<{ locations: GeoLocation[] }> = ({ locations }) => {
 
     const render = () => {
       context.clearRect(0, 0, width, height);
-      rotation += 0.25;
-      projection.rotate([rotation, -15]);
-      context.fillStyle = '#020617';
+      rotation += 0.35; // Slightly faster rotation
+      projection.rotate([rotation, -10]);
+      
+      // Ocean
+      context.fillStyle = '#050802';
       context.beginPath(); context.arc(width/2, height/2, width/2.2, 0, 2 * Math.PI); context.fill();
-      context.fillStyle = '#3a5a40'; context.strokeStyle = '#588157'; context.lineWidth = 0.3;
+      
+      // Land
+      context.fillStyle = '#1e290e'; context.strokeStyle = '#3a4a24'; context.lineWidth = 0.5;
       context.beginPath(); path(landData); context.fill(); context.stroke();
+      
+      // Markers
       locations.forEach(loc => {
         const coords = projection([loc.lng, loc.lat]);
         if (coords) {
-          const distance = d3.geoDistance([loc.lng, loc.lat], [-projection.rotate()[0], -projection.rotate()[1]]);
-          if (distance < Math.PI / 2) {
-            context.fillStyle = '#a3b18a'; context.beginPath(); context.arc(coords[0], coords[1], 4, 0, 2 * Math.PI); context.fill();
+          const dist = d3.geoDistance([loc.lng, loc.lat], [-projection.rotate()[0], -projection.rotate()[1]]);
+          if (dist < Math.PI / 2) {
+            const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+            context.fillStyle = '#ff4500'; 
+            context.beginPath(); context.arc(coords[0], coords[1], 3 + pulse * 2, 0, 2 * Math.PI); context.fill();
+            context.strokeStyle = `rgba(255, 69, 0, ${0.4 * (1-pulse)})`;
+            context.lineWidth = 1;
+            context.beginPath(); context.arc(coords[0], coords[1], 6 + pulse * 10, 0, 2 * Math.PI); context.stroke();
           }
         }
       });
@@ -147,9 +159,12 @@ const Globe: React.FC<{ locations: GeoLocation[] }> = ({ locations }) => {
   }, [landData, locations]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-6">
-      <canvas ref={canvasRef} width={280} height={280} className="rounded-full shadow-2xl" />
-      <div className="mt-4 text-[10px] uppercase tracking-widest text-white/40">Global Distribution</div>
+    <div className="flex flex-col items-center justify-center p-4">
+      <canvas ref={canvasRef} width={260} height={260} className="rounded-full shadow-[0_0_50px_rgba(255,69,0,0.1)] border border-white/5" />
+      <div className="mt-4 flex items-center gap-2 opacity-40">
+        <i className="fas fa-satellite text-[10px]"></i>
+        <span className="text-[9px] uppercase tracking-[0.3em] font-black">Habitat Distribution</span>
+      </div>
     </div>
   );
 };
@@ -168,11 +183,12 @@ const App: React.FC = () => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [loadingStep, setLoadingStep] = useState<string>('');
 
-  const pollenElements = useMemo(() => Array.from({ length: 40 }).map((_, i) => ({
-    id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 10}s`, duration: `${Math.random() * 5 + 5}s`, size: `${Math.random() * 3 + 2}px`
+  const pollenElements = useMemo(() => Array.from({ length: 30 }).map((_, i) => ({
+    id: i, left: `${Math.random() * 100}%`, delay: `${Math.random() * 10}s`, duration: `${Math.random() * 7 + 3}s`, size: `${Math.random() * 2 + 2}px`
   })), []);
 
   useEffect(() => {
+    // Vercel credentials check
     if (!API_KEY || API_KEY === 'API_KEY_PLACEHOLDER') setStatus(GameStatus.ERROR);
   }, []);
 
@@ -180,7 +196,7 @@ const App: React.FC = () => {
     try {
       setDifficulty(selectedDifficulty);
       setStatus(GameStatus.LOADING);
-      setLoadingStep(`Searching the ${selectedDifficulty.toLowerCase()} trail...`);
+      setLoadingStep(`Exploring the ${selectedDifficulty.toLowerCase()} trail...`);
       const trees = await fetchNewTrees(selectedDifficulty);
       setPool(trees);
       await startRound(trees[0], trees);
@@ -189,7 +205,7 @@ const App: React.FC = () => {
 
   const startRound = async (target: TreeData, currentPool: TreeData[]) => {
     setStatus(GameStatus.LOADING);
-    setLoadingStep(`Generating botanical imagery...`);
+    setLoadingStep(`Processing seasonal markers...`);
     try {
       const autumnImg = await generateTreeImage(target.autumnDescription, 'autumn');
       const distractors = currentPool.filter(t => t.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 2).map(t => t.commonName);
@@ -207,7 +223,7 @@ const App: React.FC = () => {
     if (correct) {
       setScore(s => s + 1);
       setStatus(GameStatus.LOADING);
-      setLoadingStep('Waiting for spring blossoms...');
+      setLoadingStep('Simulating spring transition...');
       try {
         const springImg = await generateTreeImage(currentRound.targetTree.springDescription, 'spring');
         setCurrentRound(prev => prev ? { ...prev, springImageUrl: springImg } : null);
@@ -224,10 +240,12 @@ const App: React.FC = () => {
 
   if (status === GameStatus.ERROR) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0f05] text-white p-12 text-center">
-        <i className="fas fa-exclamation-triangle text-6xl text-orange-500 mb-8"></i>
-        <h2 className="text-4xl font-black mb-4 uppercase">Credentials Error</h2>
-        <p className="text-slate-400 max-w-md text-sm">Missing API_KEY. Check Netlify environment variables.</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#080c04] text-white p-12 text-center">
+        <div className="w-20 h-20 bg-red-900/20 rounded-full flex items-center justify-center mb-8 border border-red-500/30">
+          <i className="fas fa-plug text-3xl text-red-500"></i>
+        </div>
+        <h2 className="text-4xl font-black mb-4 uppercase tracking-tighter">Connection Failed</h2>
+        <p className="text-slate-400 max-w-sm text-sm leading-relaxed">The ArborGaia engine could not verify your API credentials. Ensure the <strong>API_KEY</strong> environment variable is correctly set in your Vercel Dashboard.</p>
       </div>
     );
   }
@@ -238,17 +256,21 @@ const App: React.FC = () => {
         <div className="forest-core"></div>
         {pollenElements.map(p => <Pollen key={p.id} {...p} />)}
         
-        <header className="text-center w-full mb-12">
-          <h1 className="text-[13vw] sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter text-[#ff4500] accent-red-glow uppercase leading-none break-keep whitespace-nowrap overflow-hidden mb-4">
+        <header className="text-center w-full mb-16 animate-in fade-in duration-1000">
+          <h1 className="text-[13vw] sm:text-8xl md:text-9xl font-black tracking-tighter text-[#ff4500] accent-red-glow uppercase leading-none break-keep whitespace-nowrap overflow-hidden mb-4">
             ARBOR<span className="text-[#ca8a04] font-serif italic normal-case inline">Gaia</span>
           </h1>
-          <p className="text-white/40 italic text-sm md:text-xl">Identify the cycle. Master the forest.</p>
+          <p className="text-white/30 italic text-sm md:text-xl font-light tracking-wide">Identify the cycle. Master the forest.</p>
         </header>
 
-        <div className="flex flex-col gap-6 w-full max-w-sm">
+        <div className="flex flex-col gap-6 w-full max-w-xs md:max-w-md">
           {[Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD].map((d) => (
-            <button key={d} onClick={() => initGame(d)} className="organic-glass p-6 text-left hover:scale-105 transition-all hover:bg-[#ff4500]/10 border-[#ff4500]/20">
-              <h3 className="text-xl font-bold font-serif text-[#ca8a04]">{d} Trail</h3>
+            <button key={d} onClick={() => initGame(d)} className="organic-glass p-8 text-left hover:scale-105 transition-all hover:bg-[#ff4500]/10 border-[#ff4500]/20 group">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold font-serif text-[#ca8a04]">{d} Trail</h3>
+                <i className="fas fa-arrow-right-long text-[#ff4500] opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all"></i>
+              </div>
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-2 font-black">Level Identification Protocol</p>
             </button>
           ))}
         </div>
@@ -258,62 +280,83 @@ const App: React.FC = () => {
 
   if (status === GameStatus.LOADING) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0f05] text-white p-6">
-        <div className="w-16 h-16 border-t-2 border-[#ff4500] rounded-full animate-spin mb-8"></div>
-        <p className="text-lg italic font-serif opacity-50">"{loadingStep}"</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#080c04] text-white p-6">
+        <div className="w-16 h-16 border-t-2 border-[#ff4500] rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(255,69,0,0.2)]"></div>
+        <p className="text-lg italic font-serif opacity-40 text-center animate-pulse">"{loadingStep}"</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0f05] text-white">
-      <header className="sticky top-0 z-50 bg-[#0a0f05]/80 backdrop-blur-xl border-b border-white/5 p-4 flex justify-between items-center px-6">
-        <h1 className="text-xl font-black tracking-tighter uppercase text-[#ff4500]" onClick={() => setStatus(GameStatus.DIFFICULTY_SELECTION)}>ARBOR<span className="text-[#ca8a04]">Gaia</span></h1>
-        <div className="bg-white/5 px-4 py-1 rounded-full border border-white/10 font-bold text-[#ca8a04]">Score: {score}</div>
+    <div className="min-h-screen bg-[#080c04] text-white selection:bg-[#ff4500] selection:text-white">
+      <header className="sticky top-0 z-50 bg-[#080c04]/80 backdrop-blur-3xl border-b border-white/5 p-4 flex justify-between items-center px-6 md:px-12">
+        <h1 className="text-2xl font-black tracking-tighter uppercase text-[#ff4500] cursor-pointer" onClick={() => setStatus(GameStatus.DIFFICULTY_SELECTION)}>ARBOR<span className="text-[#ca8a04]">Gaia</span></h1>
+        <div className="bg-white/5 px-6 py-1.5 rounded-full border border-white/10 flex items-center gap-4">
+          <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Score</span>
+          <span className="text-xl font-black text-[#ca8a04] tabular-nums">{score}</span>
+        </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <main className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start pb-24">
         {currentRound && (
           <>
             <div className="lg:col-span-7">
-              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl border border-white/5">
-                <img src={isCorrect ? (currentRound.springImageUrl || currentRound.autumnImageUrl) : currentRound.autumnImageUrl} className="w-full aspect-square object-cover" alt="Specimen" />
+              <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 group">
+                <img src={isCorrect ? (currentRound.springImageUrl || currentRound.autumnImageUrl) : currentRound.autumnImageUrl} className="w-full aspect-[4/5] object-cover transition-transform duration-[5000ms] group-hover:scale-105" alt="Specimen" />
+                <div className="absolute top-8 right-8 bg-black/50 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 flex items-center gap-3">
+                  <div className={`w-2.5 h-2.5 rounded-full ${isCorrect ? 'bg-[#ca8a04] animate-pulse' : 'bg-[#ff4500] shadow-[0_0_10px_#ff4500]'}`}></div>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-[#ca8a04]">
+                    {isCorrect ? 'Spring Monograph' : 'Autumn Phase'}
+                  </span>
+                </div>
                 {isCorrect && (
-                  <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 to-transparent">
-                    <h2 className="text-4xl font-serif text-[#ca8a04]">{currentRound.targetTree.commonName}</h2>
-                    <p className="text-white/60 italic">{currentRound.targetTree.scientificName}</p>
+                  <div className="absolute inset-x-0 bottom-0 p-12 bg-gradient-to-t from-black via-black/40 to-transparent animate-in slide-in-from-bottom-8 duration-700">
+                    <h2 className="text-5xl font-serif text-[#ca8a04] mb-2">{currentRound.targetTree.commonName}</h2>
+                    <p className="text-white/50 italic text-xl font-light">{currentRound.targetTree.scientificName}</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="lg:col-span-5 space-y-8">
+            <div className="lg:col-span-5 space-y-10">
               {status === GameStatus.GUESSING && (
-                <div className="organic-glass p-8 space-y-4">
-                  <h3 className="text-lg font-bold text-[#ca8a04] mb-4">Identification</h3>
+                <div className="organic-glass p-10 space-y-6">
+                  <h3 className="text-xl font-bold text-[#ca8a04] mb-4 flex items-center gap-4">
+                    <div className="w-1.5 h-8 bg-[#ff4500] rounded-full"></div>
+                    Identify Specimen
+                  </h3>
                   {currentRound.options.map(o => (
-                    <button key={o} onClick={() => handleGuess(o)} className="w-full p-6 rounded-2xl bg-white/5 border border-white/10 text-left hover:bg-[#ff4500] hover:text-black transition-all font-bold">
-                      {o}
+                    <button key={o} onClick={() => handleGuess(o)} className="w-full p-7 rounded-[2rem] bg-white/5 border border-white/10 text-left hover:bg-[#ff4500] hover:text-[#080c04] transition-all font-black text-lg group">
+                      <div className="flex justify-between items-center">
+                        {o}
+                        <i className="fas fa-leaf opacity-0 group-hover:opacity-40 transition-opacity rotate-45"></i>
+                      </div>
                     </button>
                   ))}
                 </div>
               )}
 
               {status === GameStatus.RESULT && (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="space-y-10 animate-in fade-in slide-in-from-right-12 duration-1000">
                   {isCorrect ? (
                     <>
-                      <Globe locations={currentRound.targetTree.habitats} />
-                      <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                        <p className="text-lg text-[#ca8a04] font-serif italic">"{currentRound.targetTree.funFact}"</p>
+                      <div className="rounded-[3rem] overflow-hidden glass border border-white/5 bg-black/20">
+                        <Globe locations={currentRound.targetTree.habitats} />
                       </div>
-                      <button onClick={nextRound} className="w-full py-6 bg-[#ff4500] text-black font-black rounded-2xl">Next Specimen</button>
+                      <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] relative">
+                        <i className="fas fa-quote-left absolute top-6 left-6 text-white/5 text-4xl"></i>
+                        <p className="text-xl text-[#ca8a04] font-serif italic leading-relaxed relative z-10">"{currentRound.targetTree.funFact}"</p>
+                      </div>
+                      <button onClick={nextRound} className="w-full py-7 bg-[#ff4500] text-[#080c04] font-black rounded-[2rem] shadow-[0_20px_40px_-10px_rgba(255,69,0,0.3)] hover:scale-[1.02] active:scale-95 transition-all text-xl">Next Trail Point</button>
                     </>
                   ) : (
-                    <div className="organic-glass p-8 text-center">
-                      <h2 className="text-2xl font-bold text-[#ff4500] mb-4">Incorrect</h2>
-                      <p className="mb-8">This was a <span className="text-[#ca8a04]">{currentRound.targetTree.commonName}</span>.</p>
-                      <button onClick={nextRound} className="w-full py-6 bg-[#ff4500] text-black font-black rounded-2xl">Try Again</button>
+                    <div className="organic-glass p-12 text-center">
+                      <div className="w-20 h-20 bg-[#ff4500]/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-[#ff4500]/20">
+                        <i className="fas fa-eye-slash text-[#ff4500] text-3xl"></i>
+                      </div>
+                      <h2 className="text-3xl font-black text-[#ff4500] mb-4 font-serif italic">Observation Failure</h2>
+                      <p className="text-slate-400 mb-10 text-lg">The specimen was a <span className="text-[#ca8a04] font-bold">{currentRound.targetTree.commonName}</span>.</p>
+                      <button onClick={nextRound} className="w-full py-7 bg-[#ff4500] text-[#080c04] font-black rounded-[2rem] transition-all text-xl">Retry Scan</button>
                     </div>
                   )}
                 </div>

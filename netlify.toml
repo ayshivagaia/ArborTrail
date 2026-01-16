@@ -1,8 +1,0 @@
-[build]
-  publish = "."
-  command = "sed -i \"s/API_KEY_PLACEHOLDER/${API_KEY}/g\" index.html"
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200

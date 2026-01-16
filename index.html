@@ -10,11 +10,10 @@
     <!-- Babel standalone for on-the-fly transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Polyfill for process.env -->
+    <!-- Shim for process.env (Injected during Vercel build) -->
     <script>
         window.process = {
             env: {
-                // This placeholder will be replaced by Netlify during deployment
                 API_KEY: "API_KEY_PLACEHOLDER" 
             }
         };
@@ -24,8 +23,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
 
         :root {
-            --forest-black: #0a0f05; 
-            --forest-deep: #1a220c; 
+            --forest-black: #080c04; 
+            --forest-deep: #121a0a; 
             --pollen: #ea580c; 
             --ochre: #ca8a04; 
             --orange-red: #ff4500; 
@@ -38,6 +37,7 @@
             color: #fef2f2;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
         .font-serif { font-family: 'Playfair Display', serif; }
@@ -46,13 +46,13 @@
             position: fixed;
             inset: 0;
             z-index: -5;
-            background: radial-gradient(circle at 50% 40%, #1a220c 0%, #0a0f05 70%);
+            background: radial-gradient(circle at 50% 40%, #1a220c 0%, #080c04 80%);
         }
 
         @keyframes pollen-float {
             0% { transform: translateY(0) rotate(0); opacity: 0; }
-            20% { opacity: 0.6; }
-            80% { opacity: 0.6; }
+            20% { opacity: 0.4; }
+            80% { opacity: 0.4; }
             100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
         }
 
@@ -69,36 +69,33 @@
         }
 
         .organic-glass {
-            background: rgba(10, 15, 5, 0.7);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 69, 0, 0.2); 
-            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.9);
-            border-radius: 2rem;
+            background: rgba(8, 12, 4, 0.6);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 69, 0, 0.15); 
+            box-shadow: 0 50px 100px -25px rgba(0, 0, 0, 0.8);
+            border-radius: 2.5rem;
         }
 
-        .correct-glow {
-            box-shadow: 0 0 60px rgba(163, 177, 138, 0.25); 
-        }
-        
         .accent-red-glow {
-            text-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
+            text-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
         }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--forest-black); }
+        ::-webkit-scrollbar-thumb { background: #1a220c; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ca8a04; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "react": "https://esm.sh/react@^19.2.3",
-    "d3": "https://esm.sh/d3@^7.9.0",
-    "topojson-client": "https://esm.sh/topojson-client@^3.1.0"
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
-    <!-- Load consolidated index.tsx directly with Babel -->
     <script type="text/babel" src="index.tsx" data-type="module" data-presets="typescript,react"></script>
 </body>
 </html>
