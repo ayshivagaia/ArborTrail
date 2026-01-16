@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom';
 import { GoogleGenAI, Type } from "@google/genai";
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
@@ -42,6 +42,7 @@ export enum GameStatus {
 }
 
 // --- SERVICES ---
+// Global process is now polyfilled in index.html to prevent crash
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 const getTreeListPrompt = (difficulty: Difficulty) => {
@@ -303,4 +304,8 @@ const App: React.FC = () => {
   );
 };
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
+const container = document.getElementById('root');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
+}

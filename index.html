@@ -6,8 +6,20 @@
     <title>ArborGaia | A Botanical Journey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <!-- Babel standalone for on-the-fly transpilation -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Polyfill for process.env which is missing in browsers -->
+    <script>
+        window.process = {
+            env: {
+                // The API_KEY is expected to be injected by the environment or Netlify
+                API_KEY: "" 
+            }
+        };
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
 
@@ -131,9 +143,9 @@
   "imports": {
     "react": "https://esm.sh/react@19.0.0",
     "react-dom": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@^1.36.0",
-    "d3": "https://esm.sh/d3@7",
-    "topojson-client": "https://esm.sh/topojson-client@3",
+    "@google/genai": "https://esm.sh/@google/genai@1.36.0",
+    "d3": "https://esm.sh/d3@7.9.0",
+    "topojson-client": "https://esm.sh/topojson-client@3.1.0",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
@@ -141,7 +153,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Entry point consolidated into one file for browser-based transpilation compatibility -->
+    <!-- Script must be type="text/babel" to be picked up by the Babel standalone transpiler -->
     <script type="text/babel" src="index.tsx" data-type="module" data-presets="typescript,react"></script>
 </body>
 </html>

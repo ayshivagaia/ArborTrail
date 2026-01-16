@@ -11,9 +11,9 @@
   "dependencies": {
     "react": "^19.2.3",
     "react-dom": "19.0.0",
-    "@google/genai": "^1.36.0",
-    "d3": "7",
-    "topojson-client": "3"
+    "@google/genai": "1.36.0",
+    "d3": "7.9.0",
+    "topojson-client": "3.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
